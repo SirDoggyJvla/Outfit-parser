@@ -1,0 +1,11 @@
+{
+    "Lua.workspace.library": [
+        "${addons}/umbrella-unstable/module/library"
+    ],
+    "Lua.runtime.builtin": {
+        "debug": "disable",
+        "io": "disable",
+        "package": "disable"
+    },
+    "Lua.workspace.checkThirdParty": false
+}
