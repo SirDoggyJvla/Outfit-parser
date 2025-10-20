@@ -1,4 +1,7 @@
+---CACHE
 local module = require "OutfitParser/module"
+local CharacterOutfitUI = require "OutfitParser/ISUI/CharacterOutfitUI"
+
 
 module.OnKeyPressed = function(key)
     if key == Keyboard.KEY_X then
@@ -10,7 +13,7 @@ end
 module.main = function()
     local instance = module.UIinstance
     if instance then
-        instance:removeFromUIManager()
+        instance:close()
         module.UIinstance = nil
     else
         instance = module.createUIinstance()
@@ -20,21 +23,10 @@ end
 
 
 module.createUIinstance = function()
-    local instance = ISUI3DModel:new(0,0,400,400)
+    local instance = CharacterOutfitUI:new()
+    instance:initialise()
     instance:setVisible(true)
     instance:addToUIManager()
 
-    instance:setOutfitName("Foreman", false, false)
-	instance:setState("idle")
-	instance:setDirection(IsoDirections.S)
-	instance:setIsometric(false)
-
-    instance:setCharacter(getPlayer())
-
     return instance
-end
-
-
-module.takeScreenshot = function(filename)
-    getCore():TakeFullScreenshot(filename)
 end
