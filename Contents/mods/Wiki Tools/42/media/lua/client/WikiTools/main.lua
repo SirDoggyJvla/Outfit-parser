@@ -1,6 +1,6 @@
 ---CACHE
-local module = require "OutfitParser/module"
-local CharacterOutfitUI = require "OutfitParser/ISUI/CharacterOutfitUI"
+local module = require "WikiTools/module"
+local CharacterOutfitUI = require "WikiTools/ISUI/CharacterOutfitUI"
 
 
 module.OnKeyPressed = function(key)

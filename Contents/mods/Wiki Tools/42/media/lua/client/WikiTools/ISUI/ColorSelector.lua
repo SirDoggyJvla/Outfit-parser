@@ -1,6 +1,6 @@
 -- needed libs
 require "ISUI/ISPanel"
-local NumberSlider = require "OutfitParser/ISUI/NumberSlider"
+local NumberSlider = require "WikiTools/ISUI/NumberSlider"
 
 ---@class ColorSelector : ISPanel
 ---@field color table<string, number>

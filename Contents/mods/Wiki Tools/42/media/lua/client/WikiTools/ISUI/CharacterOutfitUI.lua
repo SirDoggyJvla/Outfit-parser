@@ -1,9 +1,9 @@
 -- needed libs
 require "ISUI/ISPanel"
-local CharacterOutfit3D = require "OutfitParser/ISUI/CharacterOutfit3D"
-local ColorSelector = require "OutfitParser/ISUI/ColorSelector"
-local NumberSlider = require "OutfitParser/ISUI/NumberSlider"
-local ProgressBar = require "OutfitParser/ISUI/ProgressBar"
+local CharacterOutfit3D = require "WikiTools/ISUI/CharacterOutfit3D"
+local ColorSelector = require "WikiTools/ISUI/ColorSelector"
+local NumberSlider = require "WikiTools/ISUI/NumberSlider"
+local ProgressBar = require "WikiTools/ISUI/ProgressBar"
 
 ---CACHE
 local buttonWidth, buttonHeight = 100, 25
