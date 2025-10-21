@@ -212,7 +212,7 @@ function CharacterOutfitUI:new()
     setmetatable(o, self)
     self.__index = self
 
-    o.filenamePattern = "OutfitParser/Outfit {outfit} {gender}"
+    o.filenamePattern = "OutfitParser/Outfit {outfit} {gender}.png"
     o.model_x, o.model_y = borderX, borderY
     o.model_w, o.model_h = 400, 400
 
