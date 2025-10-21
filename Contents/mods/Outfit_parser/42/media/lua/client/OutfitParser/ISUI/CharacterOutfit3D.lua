@@ -25,7 +25,7 @@ end
 
 function CharacterOutfit3D:create()
     --- create model view
-    local modelView = ISUI3DModel:new(0,0,400,400)
+    local modelView = ISUI3DModel:new(0,0,self.width,self.height)
     modelView:setVisible(true)
     self:addChild(modelView)
 

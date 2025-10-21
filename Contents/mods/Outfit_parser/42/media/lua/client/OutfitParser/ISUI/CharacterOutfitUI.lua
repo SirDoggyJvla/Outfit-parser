@@ -6,7 +6,7 @@ local NumberSlider = require "OutfitParser/ISUI/NumberSlider"
 local ProgressBar = require "OutfitParser/ISUI/ProgressBar"
 
 ---CACHE
-local buttonWidth, buttonHeight = 50, 25
+local buttonWidth, buttonHeight = 100, 25
 local borderX, borderY = 25, 25
 
 
@@ -148,7 +148,7 @@ function CharacterOutfitUI:create()
 
     -- log panel
     local log_x, log_y = model_x + model_w + borderX, borderY
-    local log_w, log_h = 300, self.height - borderY*2
+    local log_w, log_h = 200, self.height - borderY*2
     local logPanel = ISRichTextPanel:new(log_x, log_y, log_w, log_h)
     logPanel:initialise()
 
@@ -171,14 +171,15 @@ function CharacterOutfitUI:create()
     self.parse_outfits = parse_outfits
 
     -- stop button
-    local stop_button = ISButton:new(log_x + log_w + borderX, log_y + buttonHeight + borderY, buttonWidth, buttonHeight, "Stop", self, function(self) self.renderOutfits = nil; self.lastScreenshotTime = nil end)
+    local stop_x, stop_y = log_x + log_w + borderX, log_y + buttonHeight + borderY
+    local stop_button = ISButton:new(stop_x, stop_y, buttonWidth, buttonHeight, "Stop", self, function(self) self.renderOutfits = nil; self.lastScreenshotTime = nil end)
     stop_button:initialise()
     self:addChild(stop_button)
     self.stop_button = stop_button
 
     -- color background selector
-    local color_x, color_y = model_x, model_y + model_h + borderY
-    local color_w, color_h = model_w, 150
+    local color_x, color_y = log_x + log_w + borderX, stop_y + buttonHeight + borderY
+    local color_w, color_h = 400, 150
     local colorSelector = ColorSelector:new(color_x, color_y, color_w, color_h, {r=0, g=1, b=0, a=1}, false)
     colorSelector:initialise()
     self:addChild(colorSelector)
@@ -192,7 +193,7 @@ function CharacterOutfitUI:create()
 
      -- time delta selector
     local delta_x, delta_y = color_x, color_y + color_h + borderY
-    local delta_w, delta_h = model_w, 25
+    local delta_w, delta_h = color_w, 25
     local deltaSelector = NumberSlider:new(delta_x, delta_y, delta_w, delta_h, self.screenshotDelay, 0, 20, 0.1, 1)
     deltaSelector:initialise()
     self:addChild(deltaSelector)
@@ -214,7 +215,7 @@ function CharacterOutfitUI:new()
 
     o.filenamePattern = "OutfitParser/Outfit {outfit} {gender}.png"
     o.model_x, o.model_y = borderX, borderY
-    o.model_w, o.model_h = 400, 400
+    o.model_w, o.model_h = getCore():getScreenHeight() - borderY*2, getCore():getScreenHeight() - borderY*2
 
     o.screenshotDelay = 1 -- seconds
 
