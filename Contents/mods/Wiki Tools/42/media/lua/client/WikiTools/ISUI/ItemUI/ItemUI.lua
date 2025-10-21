@@ -2,10 +2,10 @@
 require "ISUI/ISPanel"
 require "ISUI/ISComboBox"
 require "DebugUIs/AttachmentEditorUI"
-local Scene = AttachmentEditorUI_Scene
+local Wiki3DScene = require "WikiTools/ISUI/ItemUI/Wiki3DScene"
 
 ---@class ItemUI : ISPanel
----@field scene AttachmentEditorUI_Scene
+---@field scene Wiki3DScene
 local ItemUI = ISPanel:derive("ItemUI")
 
 ---CACHE
@@ -33,8 +33,8 @@ end
 function ItemUI:onComboAddModel()
 	local scriptName = self.comboAddModel:getOptionText(self.comboAddModel.selected)
 	self.comboAddModel.selected = 0 -- ADD MODEL
-	self:java2("createModel", scriptName, scriptName)
-	self:toUI()
+	self.scene:fromLua2("createModel", scriptName, scriptName)
+	-- self:toUI()
 end
 
 function ItemUI:create()
@@ -65,16 +65,22 @@ function ItemUI:create()
 
 
     -- 3D scene
-    self.scene = Scene:new(0, 0, self.width, self.height)
-	self.scene:initialise()
+    self.scene = Wiki3DScene:new(0, 0, 500, 500)
+    self.scene:initialise()
 	self.scene:instantiate()
-	self.scene:setAnchorRight(true)
-	self.scene:setAnchorBottom(true)
-	self:addChild(self.scene)
+    self:addChild(self.scene)
+
+
+
+    -- self.scene = Scene:new(0, 0, self.width, self.height)
+
+	-- self.scene:setAnchorRight(true)
+	-- self.scene:setAnchorBottom(true)
+	
 
     self.scene.javaObject:fromLua1("setMaxZoom", 20)
 	self.scene.javaObject:fromLua1("setZoom", 10)
-	self.scene.javaObject:fromLua1("setGizmoScale", 1.0 / 5.0)
+	-- self.scene.javaObject:fromLua1("setGizmoScale", 1.0 / 5.0)
 end
 
 function ItemUI:new()

@@ -10,7 +10,7 @@ module.OnKeyPressed = function(key)
     -- CharacterOutfitUI
     if key == Keyboard.KEY_X then
         module.openOrCloseUI(CharacterOutfitUI)
-    elseif key == Keyboard.KEY_Y then
+    elseif key == Keyboard.KEY_U then
         module.openOrCloseUI(ItemUI)
     end
 end
