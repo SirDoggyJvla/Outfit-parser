@@ -1,6 +1,6 @@
 -- needed libs
 require "ISUI/ISPanel"
-local CharacterOutfit3D = require "WikiTools/ISUI/CharacterOutfit3D"
+local CharacterOutfit3D = require "WikiTools/ISUI/CharacterOutfitUI/CharacterOutfit3D"
 local ColorSelector = require "WikiTools/ISUI/ColorSelector"
 local NumberSlider = require "WikiTools/ISUI/NumberSlider"
 local ProgressBar = require "WikiTools/ISUI/ProgressBar"
