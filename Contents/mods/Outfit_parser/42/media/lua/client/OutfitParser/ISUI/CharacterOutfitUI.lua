@@ -200,11 +200,21 @@ function CharacterOutfitUI:create()
     self.deltaSelector = deltaSelector
 
     -- progress bar
-    local progressBar = ProgressBar:new(delta_x, delta_y + delta_h + borderY, delta_w, 25, 1)
+    local progress_x, progress_y = delta_x, delta_y + delta_h + borderY
+    local progress_w, progress_h = color_w, 25
+    local progressBar = ProgressBar:new(progress_x, progress_y, progress_w, progress_h, 1)
     progressBar:initialise()
     self:addChild(progressBar)
     self.progressBar = progressBar
     progressBar:setMaxValue(#self.outfits)
+
+    -- filename text box
+    local filename_x, filename_y = progress_x, progress_y + progress_h + borderY
+    local filename_w, filename_h = color_w, 25
+    local filenameBox = ISTextEntryBox:new(self.filenamePattern, filename_x, filename_y, filename_w, filename_h)
+    filenameBox:initialise()
+    self:addChild(filenameBox)
+    self.filenameBox = filenameBox
 end
 
 function CharacterOutfitUI:new()
