@@ -1,29 +1,37 @@
+---@alias WikiToolsUI CharacterOutfitUI
+
 ---CACHE
 local module = require "WikiTools/module"
-local CharacterOutfitUI = require "WikiTools/ISUI/CharacterOutfitUI"
+local CharacterOutfitUI = require "WikiTools/ISUI/CharacterOutfitUI/CharacterOutfitUI"
+local ItemUI = require "WikiTools/ISUI/ItemUI/ItemUI"
 
 
 module.OnKeyPressed = function(key)
+    -- CharacterOutfitUI
     if key == Keyboard.KEY_X then
-        module.main()
+        module.openOrCloseUI(CharacterOutfitUI)
+    elseif key == Keyboard.KEY_Y then
+        module.openOrCloseUI(ItemUI)
     end
 end
 
 
-module.main = function()
+---Used to create a UI instance of the given class.
+---@param class WikiToolsUI
+module.openOrCloseUI = function(class)
     local instance = module.UIinstance
     if instance then
         instance:close()
         module.UIinstance = nil
     else
-        instance = module.createUIinstance()
-        module.UIinstance = instance
+        module.UIinstance = module.createUIinstance(class)
     end
 end
 
-
-module.createUIinstance = function()
-    local instance = CharacterOutfitUI:new()
+---Create a UI instance of the given class. Needs to have normalized constructors.
+---@param class WikiToolsUI
+module.createUIinstance = function(class)
+    local instance = class:new()
     instance:initialise()
     instance:setVisible(true)
     instance:addToUIManager()
