@@ -1,4 +1,4 @@
----@alias WikiToolsUI CharacterOutfitUI
+---@alias WikiToolsUI CharacterOutfitUI|ItemUI
 
 ---CACHE
 local module = require "WikiTools/module"
