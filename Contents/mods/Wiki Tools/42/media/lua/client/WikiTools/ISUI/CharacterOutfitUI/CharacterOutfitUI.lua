@@ -31,17 +31,14 @@ local BORDER_X, BORDER_Y = 25, 25
 local CharacterOutfitUI = ISPanel:derive("CharacterOutfitUI")
 
 
-function CharacterOutfitUI:initialise()
-    ISPanel.initialise(self)
-    self:create()
-end
 
-function CharacterOutfitUI:close()
-    self:setVisible(false)
-    self:removeFromUIManager()
-    module.UIinstance = nil
-end
 
+
+---[[=====================================]]
+--- RENDERING
+---[[=====================================]]
+
+---Updates the background color and takes screenshots of outfits at a timed interval.
 function CharacterOutfitUI:prerender()
     ISPanel.prerender(self)
 
@@ -89,19 +86,14 @@ function CharacterOutfitUI:prerender()
     end
 end
 
-function CharacterOutfitUI:formatTemplate(template, params)
-    return template:gsub("{(%w+)}", params)
-end
-
-function CharacterOutfitUI:getFilename(params)
-    return self:formatTemplate(self.filenamePattern, params)
-end
-
-function CharacterOutfitUI:takeScreenshot(filename)
-    getCore():TakeFullScreenshot(filename)
-end
 
 
+---[[=====================================]]
+--- UTILS
+---[[=====================================]]
+
+---Retrieve all the outfits from the game.
+---@return table<number, {outfit:string, gender:string}>
 function CharacterOutfitUI:getOutfits()
     local maleOutfits = getAllOutfits(false)
     local femaleOutfits = getAllOutfits(true)
@@ -120,6 +112,49 @@ function CharacterOutfitUI:getOutfits()
     return outfits
 end
 
+---Format a template parameters written as `{param}` into a string. 
+---@param template string
+---@param params table
+---@return string
+---@return integer
+function CharacterOutfitUI:formatTemplate(template, params)
+    return template:gsub("{(%w+)}", params)
+end
+
+---Get the filename from the provided params.
+---@param params table
+---@return string
+---@return integer
+function CharacterOutfitUI:getFilename(params)
+    return self:formatTemplate(self.filenamePattern, params)
+end
+
+---Take a screenshot which saves inside the cache folder `Zomboid/Screenshots` with the filename.
+---@param filename string
+function CharacterOutfitUI:takeScreenshot(filename)
+    getCore():TakeFullScreenshot(filename)
+end
+
+
+
+---[[=====================================]]
+--- BUTTONS AND UI ELEMENTS REACTIONS
+---[[=====================================]]
+
+---Close the UI.
+function CharacterOutfitUI:close()
+    self:setVisible(false)
+    self:removeFromUIManager()
+    module.UIinstance = nil
+end
+
+---Log a message to the log panel.
+---@param message string
+function CharacterOutfitUI:log(message)
+    self.logPanel.text = message .. "\n" .. self.logPanel.text
+    self.logPanel:paginate()
+end
+
 function CharacterOutfitUI:parseOutfits()
     -- intialize rendering
     self.renderOutfits = self.outfits
@@ -128,14 +163,23 @@ end
 
 
 
-function CharacterOutfitUI:log(message)
-    self.logPanel.text = message .. "\n" .. self.logPanel.text
-    self.logPanel:paginate()
+---[[=====================================]]
+--- INSTANCE SETUP
+---[[=====================================]]
+
+function CharacterOutfitUI:initialise()
+    ISPanel.initialise(self)
+    self:create()
 end
 
-
 function CharacterOutfitUI:create()
-    --- create 3D model
+    -- close button
+    local closeButton = ISButton:new(self.width - BUTTON_WIDTH, 0, BUTTON_WIDTH, BUTTON_HEIGHT, "Close", self, self.close)
+    closeButton:initialise()
+    self:addChild(closeButton)
+    self.closeButton = closeButton
+
+    --- create 3D model scene
     local model_x, model_y = self.model_x, self.model_y
     local model_w, model_h = self.model_w, self.model_h
     local model3D = CharacterOutfit3D:new(model_x, model_y, model_w, model_h)
@@ -143,17 +187,16 @@ function CharacterOutfitUI:create()
     self:addChild(model3D)
     self.model3D = model3D
 
-    -- close button
-    local closeButton = ISButton:new(self.width - BUTTON_WIDTH, 0, BUTTON_WIDTH, BUTTON_HEIGHT, "Close", self, self.close)
-    closeButton:initialise()
-    self:addChild(closeButton)
-    self.closeButton = closeButton
-
-    -- pre init for log panel bottom
+    -- color background selector
     local color_w, color_h = 400, 150
+    local color_x, color_y = model_x + model_w + BORDER_X, self.height - BORDER_Y - color_h
+    local colorSelector = ColorSelector:new(color_x, color_y, color_w, color_h, {r=0, g=1, b=0, a=1}, false)
+    colorSelector:initialise()
+    self:addChild(colorSelector)
+    self.colorSelector = colorSelector
 
     -- log panel
-    local log_x, log_y = model_x + model_w + BORDER_X, BORDER_Y
+    local log_x, log_y = color_x, BORDER_Y
     local log_w, log_h = 200, self.height - BORDER_Y*3 - color_h
     local logPanel = ISRichTextPanel:new(log_x, log_y, log_w, log_h)
     logPanel:initialise()
@@ -182,13 +225,6 @@ function CharacterOutfitUI:create()
     stop_button:initialise()
     self:addChild(stop_button)
     self.stop_button = stop_button
-
-    -- color background selector
-    local color_x, color_y = log_x, self.height - BORDER_Y - color_h
-    local colorSelector = ColorSelector:new(color_x, color_y, color_w, color_h, {r=0, g=1, b=0, a=1}, false)
-    colorSelector:initialise()
-    self:addChild(colorSelector)
-    self.colorSelector = colorSelector
 
     -- time delta selector label
     local deltaLabel = ISLabel:new(stop_x, stop_y + BUTTON_HEIGHT + BORDER_Y - 20, 20, "Delay (s):", 1, 1, 1, 1, UIFont.Small, true)
@@ -222,6 +258,8 @@ function CharacterOutfitUI:create()
     self.filenameBox = filenameBox
 end
 
+---Create a new instance of CharacterOutfitUI.
+---@return CharacterOutfitUI
 function CharacterOutfitUI:new()
     local o = {}
     o = ISPanel:new(0, 0, getCore():getScreenWidth(), getCore():getScreenHeight()) --[[@as CharacterOutfitUI]]

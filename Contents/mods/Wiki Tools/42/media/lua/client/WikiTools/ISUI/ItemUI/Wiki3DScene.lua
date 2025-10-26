@@ -32,8 +32,8 @@ end
 --- SCENE MODIFICATIONS
 
 ---Create a model in the 3D scene.
----```lua
----JAVA.createModel(id, modelScriptName)
+---```JAVA
+---createModel(id, modelScriptName)
 ---```
 ---@param id string
 ---@param scriptName string
@@ -44,10 +44,15 @@ function Wiki3DScene:setModel(id, scriptName)
         -- add new model
         self.currentModel = scriptName
         self:fromLua2("createModel", id, scriptName)
+        self:setModelUseWorldAttachment(true, id)
+        self:setModelWeaponRotationHack(self.weaponRotationHack, id)
 
         if self.parent.comboAddModelLabel then
             self.parent.comboAddModelLabel:setName(scriptName)
         end
+
+        local modData = ModData.getOrCreate("WikiTools")
+        modData.lastOpenedModel = scriptName
     end
 end
 
@@ -60,20 +65,62 @@ function Wiki3DScene:removeModel(id)
     end
 end
 
+function Wiki3DScene:setModelUseWorldAttachment(bool, id)
+    self:fromLua2("setModelUseWorldAttachment", id, bool)
+end
+
+function Wiki3DScene:setModelWeaponRotationHack(bool, id)
+    -- automatically set to true if the item is found for this model
+    -- and the model is a weapon
+    local item = getScriptManager():getItem(self.currentModel)
+    print("testing")
+    local modelScript = self:getModelScript()
+    print(modelScript)
+    print(modelScript:getMeshName())
+    print(modelScript:isStatic())
+    print(modelScript:getShaderName())
+    print(modelScript:getTextureName())
+
+    print(self.currentModel)
+    print(item)
+    if item then
+        print(item:getWeaponSprite())
+    end
+
+    self:fromLua2("setModelWeaponRotationHack", id, bool)
+    self.weaponRotationHack = bool
+    local modData = ModData.getOrCreate("WikiTools")
+    modData.weaponRotationHack = bool
+end
+
+function Wiki3DScene:setAttach(attach)
+    attach = "world"
+    self:fromLua3("placeAttachmentAtOrigin", "worldModel", attach, true)
+end
+
+function Wiki3DScene:getModelScript()
+    -- The game does it this way internally, but somehow this doesn't work in our case
+
+    -- local count = self:fromLua0("getModelCount")
+    -- print(count)
+    -- if count then
+    --     for i=1,count do
+    --         local modelScript = self:fromLua1("getModelScript", i-1)
+    --         print(modelScript)
+    --     end
+    -- end
+
+    -- return self:fromLua1("getModelScript", 0)
+
+    -- So we use a simpler method below
+    -- tbf idk why the game doesn't even use that in the first place
+    return ScriptManager.instance:getModelScript(self.currentModel)
+end
+
 
 --- ACTION REACTIONS
 
----Add the model on combo box selection in parent UI.
-function Wiki3DScene:onComboAddModel()
-    local combo = self.parent.comboAddModel
-	local scriptName = combo:getOptionText(combo.selected)
-	combo.selected = 0 -- the default option is "ADD MODEL"
-    if not scriptName then return end
-
-	self:setModel("worldModel", scriptName)
-end
-
-function Wiki3DScene:onTickFromLua(bool, method)
+function Wiki3DScene:onTickFromLua1(bool, method)
     self:fromLua1(method, bool)
 end
 
@@ -86,18 +133,16 @@ end
 ---Setup the default 3D view.
 function Wiki3DScene:setupScene()
     self:setView("UserDefined")
+    self:fromLua3("setViewRotation", 30.0, 45.0 + 90.0, 0.0)
+    self:fromLua1("setGridPlane", "XZ")
+
     self:fromLua1("setMaxZoom", 20)
 	self:fromLua1("setZoom", 10)
 	-- self:fromLua1("setGizmoScale", 1.0 / 5.0)
 
-    self:fromLua3("setViewRotation", 30.0, 45.0 + 90.0, 0.0)
-
-    self:setModel("worldModel", "Base.FireAxe")
-	self:fromLua2("setModelUseWorldAttachment", "worldModel", true)
-    self:fromLua2("setModelWeaponRotationHack", "worldModel", true)
+    -- self.weaponRotationHack = true -- default
 
     self:fromLua1("setDrawGrid", false)
-	self:fromLua1("setGridPlane", "XZ")
 
     self:fromLua0("clearAABBs")
     self:fromLua0("clearAxes")
