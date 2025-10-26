@@ -70,21 +70,25 @@ function Wiki3DScene:setModelUseWorldAttachment(bool, id)
 end
 
 function Wiki3DScene:setModelWeaponRotationHack(bool, id)
-    -- automatically set to true if the item is found for this model
-    -- and the model is a weapon
-    local item = getScriptManager():getItem(self.currentModel)
-    print("testing")
-    local modelScript = self:getModelScript()
-    print(modelScript)
-    print(modelScript:getMeshName())
-    print(modelScript:isStatic())
-    print(modelScript:getShaderName())
-    print(modelScript:getTextureName())
+    ---@TODO: automatically set to true if the item is found for this model and the model is a weapon
 
-    print(self.currentModel)
-    print(item)
+    local item = getScriptManager():getItem(self.currentModel)
+    DebugLog.log(tostring(item))
     if item then
-        print(item:getWeaponSprite())
+        DebugLog.log(tostring(item:getWorldStaticModelsByIndex()))
+        DebugLog.log(item:getStaticModel())
+        DebugLog.log(item:getWorldStaticModel())
+        DebugLog.log(item:getWeaponSprite())
+
+        local sprite = item:getWeaponSprite()
+        DebugLog.log(sprite)
+        if sprite then
+            DebugLog.log(tostring(ScriptManager.instance:getModelScript(sprite)))
+        end
+
+        local invItem = instanceItem(self.currentModel)
+        DebugLog.log(tostring(invItem))
+        DebugLog.log(tostring(invItem:getStaticModel()))
     end
 
     self:fromLua2("setModelWeaponRotationHack", id, bool)
