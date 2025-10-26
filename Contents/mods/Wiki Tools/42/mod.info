@@ -1,4 +1,6 @@
 name=Wiki Tools
 id=WikiTools
-description=This mod was made for the PZwiki to parse and render outfits in the game.
+description=This mod was made for the PZwiki to serve as in-game tools to achieve various actions.
 author=SimKDT
+poster=preview.png
+icon=icon.png
