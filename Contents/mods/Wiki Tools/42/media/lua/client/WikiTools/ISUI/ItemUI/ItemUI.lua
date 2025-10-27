@@ -4,6 +4,7 @@ require "ISUI/ISComboBox"
 require "DebugUIs/AttachmentEditorUI"
 local Wiki3DScene = require "WikiTools/ISUI/ItemUI/Wiki3DScene"
 local ColorSelector = require "WikiTools/ISUI/ColorSelector"
+local ISComboBoxModels = require "WikiTools/ISUI/ItemUI/ISComboBoxModels"
 
 local module = require "WikiTools/module"
 
@@ -50,26 +51,6 @@ end
 --- UTILS
 ---[[=====================================]]
 
----Get the list of models available in the script manager.
----@return table
-function ItemUI:getModelList()
-    -- parse model scripts
-    local scripts = getScriptManager():getAllModelScripts()
-    local sorted = {}
-	for i=0,scripts:size()-1 do repeat
-        local script = scripts:get(i)
-        local fullType = script:getFullType()
-
-        -- ignore body models
-        if fullType == "Base.FemaleBody" or fullType == "Base.MaleBody" then
-            break
-        end
-        table.insert(sorted, fullType)
-    until true end
-    table.sort(sorted)
-    return sorted
-end
-
 ---Format a template parameters written as `{param}` into a string. 
 ---@param template string
 ---@param params table
@@ -93,8 +74,14 @@ function ItemUI:takeScreenshot(filename)
     getCore():TakeFullScreenshot(filename)
 end
 
-function ItemUI:getModelScript(scriptName)
-    return self.scene:getModelScript()
+function ItemUI:getItemModel(item)
+    local model = item:getWorldStaticModel()
+    if model then return model end
+
+    model = item:getStaticModel()
+    if model then return model end
+
+    return nil
 end
 
 
@@ -104,15 +91,44 @@ end
 
 function ItemUI:onComboAddModel()
     local combo = self.comboAddModel
-    local scriptName = combo:getOptionText(combo.selected)
+    local selected = combo:getOptionText(combo.selected)
 	combo.selected = 0 -- default option
-    if not scriptName then
-        self:log("No model selected.")
+    if not selected then
+        self:log("UNEXPECTED: No model selected.")
         return
     end
-    self:log(scriptName)
 
-	self.scene:setModel("worldModel", scriptName)
+    -- try to get the model
+    local model = self.comboAddModel:getModel(selected)
+    if not model then
+        self:log("Couldn't find the model for item "..selected)
+        return
+    end
+
+    self:log("Setting model: " .. selected)
+	self.scene:setModel("worldModel", model)
+
+    -- update label
+    if self.comboAddModelLabel then
+        self.comboAddModelLabel:setName(selected)
+    end
+end
+
+function ItemUI:onComboChangeType()
+    local combo = self.comboType
+    local listingType = combo:getOptionText(combo.selected)
+    if not listingType then
+        self:log("UNEXPECTED: No type selected.")
+        return
+    end
+    self:log("Listing: "..listingType)
+
+    local modData = ModData.getOrCreate("WikiTools")
+    modData.modelListingType = listingType
+    self.listingType = listingType
+
+    -- repopulate model list
+    self.comboAddModel:updateListing(listingType)
 end
 
 ---Handle tick box selection.
@@ -139,7 +155,7 @@ end
 ---Log a message to the log panel.
 ---@param message string
 function ItemUI:log(message)
-    self.logPanel.text = message .. "\n" .. self.logPanel.text
+    self.logPanel.text = "> " .. message .. "\n" .. self.logPanel.text
     self.logPanel:paginate()
 end
 
@@ -154,22 +170,17 @@ function ItemUI:initialise()
     self:create()
 end
 
----Populate the combox box with the list of models.
----@param combo ISComboBox
-function ItemUI:populateModelList(combo)
-    local sorted = self:getModelList()
-
-    -- add to combo
-	for _,scriptName in ipairs(sorted) do
-		combo:addOption(scriptName)
-	end
-    combo.selected = 0 -- default option
-end
-
 function ItemUI:setupDefaultValues()
     local modData = ModData.getOrCreate("WikiTools")
+
+    -- last opened model
     modData.lastOpenedModel = modData.lastOpenedModel or "Base.FireAxe"
 
+    if self.comboAddModelLabel then
+        self.comboAddModelLabel:setName(modData.lastOpenedModel)
+    end
+
+    -- weapon rotation hack
     if modData.weaponRotationHack == nil then
         modData.weaponRotationHack = true
     end
@@ -177,6 +188,10 @@ function ItemUI:setupDefaultValues()
 
     local tickBox = self.tickBox
     tickBox:setSelected(3, modData.weaponRotationHack)
+
+    -- model listing type
+    modData.modelListingType = modData.modelListingType or "Items"
+    self.listingType = modData.modelListingType
 
     -- setup model
     self.scene:setModel("worldModel", modData.lastOpenedModel)
@@ -210,7 +225,7 @@ function ItemUI:create()
 
     -- log panel
     local log_x, log_y = color_x, scene_y
-    local log_w, log_h = 200, self.height - BORDER_Y*3 - color_h
+    local log_w, log_h = 300, self.height - BORDER_Y*3 - color_h
     local logPanel = ISRichTextPanel:new(log_x, log_y, log_w, log_h)
     logPanel:initialise()
 
@@ -227,25 +242,33 @@ function ItemUI:create()
     self.logPanel = logPanel
 
 
+    -- combo box listing type
+    local comboType_x, comboType_y = log_x + log_w + BORDER_X, log_y
+    local comboType_w, comboType_h = 200, BUTTON_HEIGHT
+    local comboType = ISComboBox:new(comboType_x, comboType_y, comboType_w, comboType_h, self, self.onComboChangeType)
+    comboType.noSelectionText = "Select model listing method"
+    comboType:setEditable(true)
+    self:addChild(comboType)
+    self.comboType = comboType
+
     -- combo box selection
-    local combo_x, combo_y = log_x + log_w + BORDER_X, log_y
-    local combo_w, combo_h = 200, BUTTON_HEIGHT
-    local comboAddModel = ISComboBox:new(combo_x, combo_y, combo_w, combo_h, self, self.onComboAddModel)
-	comboAddModel.noSelectionText = getText("IGUI_AttachmentEditor_AddModel")
+    local comboModel_x, comboModel_y = comboType_x, comboType_y + comboType_h + BORDER_Y
+    local comboModel_w, comboModel_h = comboType_w, comboType_h
+    local comboAddModel = ISComboBoxModels:new(comboModel_x, comboModel_y, comboModel_w, comboModel_h, self, self.onComboAddModel)
+	comboAddModel.noSelectionText = "Select listing method"
 	comboAddModel:setEditable(true)
 	self:addChild(comboAddModel)
 	self.comboAddModel = comboAddModel
-    self:populateModelList(comboAddModel)
 
     -- current combo box selection label
-    local label_x, label_y = combo_x, combo_y + combo_h + 2
+    local label_x, label_y = comboModel_x, comboModel_y + comboModel_h + 2
     local comboAddModelLabel = ISLabel:new(label_x, label_y, LABEL_HGT, self.scene.currentModel, 1, 1, 1, 1, UIFont.Small, true)
     comboAddModelLabel:initialise()
     self:addChild(comboAddModelLabel)
     self.comboAddModelLabel = comboAddModelLabel
 
     -- tick boxes
-    local tick_x, tick_y = combo_x + combo_w + BORDER_X, combo_y
+    local tick_x, tick_y = comboType_x + comboType_w + BORDER_X, comboType_y
     local tick_w, tick_h = 100, FONT_HGT_SMALL + 2 * 2
     local tickBox = ISTickBox:new(tick_x, tick_y, tick_w, tick_h, "Ticks", self, self.onTickBox)
     tickBox:initialise()
@@ -269,6 +292,14 @@ function ItemUI:create()
 
     -- init model
     self:setupDefaultValues()
+
+    -- populate combo box
+    comboType:addOption("All models")
+    comboType:addOption("All items")
+
+    -- update selection
+    comboType:select(self.listingType)
+    self.comboAddModel:updateListing(self.listingType)
 end
 
 function ItemUI:new()

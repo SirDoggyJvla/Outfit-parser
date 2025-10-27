@@ -47,10 +47,6 @@ function Wiki3DScene:setModel(id, scriptName)
         self:setModelUseWorldAttachment(true, id)
         self:setModelWeaponRotationHack(self.weaponRotationHack, id)
 
-        if self.parent.comboAddModelLabel then
-            self.parent.comboAddModelLabel:setName(scriptName)
-        end
-
         local modData = ModData.getOrCreate("WikiTools")
         modData.lastOpenedModel = scriptName
     end
@@ -72,24 +68,26 @@ end
 function Wiki3DScene:setModelWeaponRotationHack(bool, id)
     ---@TODO: automatically set to true if the item is found for this model and the model is a weapon
 
-    local item = getScriptManager():getItem(self.currentModel)
-    DebugLog.log(tostring(item))
-    if item then
-        DebugLog.log(tostring(item:getWorldStaticModelsByIndex()))
-        DebugLog.log(item:getStaticModel())
-        DebugLog.log(item:getWorldStaticModel())
-        DebugLog.log(item:getWeaponSprite())
+    -- local item = self.parent.listedItems[self.currentModel]
 
-        local sprite = item:getWeaponSprite()
-        DebugLog.log(sprite)
-        if sprite then
-            DebugLog.log(tostring(ScriptManager.instance:getModelScript(sprite)))
-        end
+    -- local item = getScriptManager():getItem(self.currentModel)
+    -- DebugLog.log(tostring(item))
+    -- if item then
+    --     DebugLog.log(tostring(item:getWorldStaticModelsByIndex()))
+    --     DebugLog.log(item:getStaticModel())
+    --     DebugLog.log(item:getWorldStaticModel())
+    --     DebugLog.log(item:getWeaponSprite())
 
-        local invItem = instanceItem(self.currentModel)
-        DebugLog.log(tostring(invItem))
-        DebugLog.log(tostring(invItem:getStaticModel()))
-    end
+    --     local sprite = item:getWeaponSprite()
+    --     DebugLog.log(sprite)
+    --     if sprite then
+    --         DebugLog.log(tostring(ScriptManager.instance:getModelScript(sprite)))
+    --     end
+
+    --     local invItem = instanceItem(self.currentModel)
+    --     DebugLog.log(tostring(invItem))
+    --     DebugLog.log(tostring(invItem:getStaticModel()))
+    -- end
 
     self:fromLua2("setModelWeaponRotationHack", id, bool)
     self.weaponRotationHack = bool
