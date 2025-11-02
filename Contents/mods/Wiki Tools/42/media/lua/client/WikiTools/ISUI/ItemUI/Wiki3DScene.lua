@@ -37,18 +37,16 @@ end
 ---```
 ---@param id string
 ---@param scriptName string
-function Wiki3DScene:setModel(id, scriptName)
+function Wiki3DScene:setModel(id, scriptName, weaponRotationHack)
     if not self.currentModel or self.currentModel ~= scriptName then
         self:removeModel(id) -- remove first the model if already exists
 
         -- add new model
         self.currentModel = scriptName
         self:fromLua2("createModel", id, scriptName)
-        self:setModelUseWorldAttachment(true, id)
-        self:setModelWeaponRotationHack(self.weaponRotationHack, id)
+        self:setModelUseWorldAttachment(true, id) -- always do that
 
-        local modData = ModData.getOrCreate("WikiTools")
-        modData.lastOpenedModel = scriptName
+        self:setModelWeaponRotationHack(weaponRotationHack, id)
     end
 end
 
@@ -66,33 +64,12 @@ function Wiki3DScene:setModelUseWorldAttachment(bool, id)
 end
 
 function Wiki3DScene:setModelWeaponRotationHack(bool, id)
-    ---@TODO: automatically set to true if the item is found for this model and the model is a weapon
-
-    -- local item = self.parent.listedItems[self.currentModel]
-
-    -- local item = getScriptManager():getItem(self.currentModel)
-    -- DebugLog.log(tostring(item))
-    -- if item then
-    --     DebugLog.log(tostring(item:getWorldStaticModelsByIndex()))
-    --     DebugLog.log(item:getStaticModel())
-    --     DebugLog.log(item:getWorldStaticModel())
-    --     DebugLog.log(item:getWeaponSprite())
-
-    --     local sprite = item:getWeaponSprite()
-    --     DebugLog.log(sprite)
-    --     if sprite then
-    --         DebugLog.log(tostring(ScriptManager.instance:getModelScript(sprite)))
-    --     end
-
-    --     local invItem = instanceItem(self.currentModel)
-    --     DebugLog.log(tostring(invItem))
-    --     DebugLog.log(tostring(invItem:getStaticModel()))
-    -- end
-
     self:fromLua2("setModelWeaponRotationHack", id, bool)
-    self.weaponRotationHack = bool
-    local modData = ModData.getOrCreate("WikiTools")
-    modData.weaponRotationHack = bool
+end
+
+function Wiki3DScene:setDrawGridAxes(bool)
+    self:fromLua1("setDrawGrid", bool)
+    self:fromLua1("setDrawGridAxes", bool)
 end
 
 function Wiki3DScene:setAttach(attach)
@@ -141,8 +118,6 @@ function Wiki3DScene:setupScene()
     self:fromLua1("setMaxZoom", 20)
 	self:fromLua1("setZoom", 10)
 	-- self:fromLua1("setGizmoScale", 1.0 / 5.0)
-
-    -- self.weaponRotationHack = true -- default
 
     self:fromLua1("setDrawGrid", false)
 

@@ -43,7 +43,10 @@ end
 --- PARSER
 ---[[=====================================]]
 
-
+---@TODO: implement the auto parsing of every models/items in the selected list
+function ItemUI:setNextModel(fullType)
+    self:setModel(fullType, true)
+end
 
 
 
@@ -74,16 +77,31 @@ function ItemUI:takeScreenshot(filename)
     getCore():TakeFullScreenshot(filename)
 end
 
-function ItemUI:getItemModel(item)
-    local model = item:getWorldStaticModel()
-    if model then return model end
+function ItemUI:setModel(fullType, autoHack)
+    local model = self.comboAddModel:getModel(fullType)
+    if not model then
+        self:log("Couldn't find the model for item "..fullType)
+        return
+    end
 
-    model = item:getStaticModel()
-    if model then return model end
+    -- set the new model as last opened
+    local modData = ModData.getOrCreate("WikiTools")
+    modData.lastOpenedModel = fullType
 
-    return nil
+    -- automatically determine if we need the weapon rotation hack
+    if autoHack == nil then
+        autoHack = self.comboAddModel:getWeaponRotationHack(fullType)
+            or false
+        self.tickBox:setSelected(2, autoHack)
+    end
+
+    self.scene:setModel("worldModel", model, autoHack)
+
+    -- update label
+    if self.comboAddModelLabel then
+        self.comboAddModelLabel:setName(fullType)
+    end
 end
-
 
 ---[[=====================================]]
 --- BUTTONS AND UI ELEMENTS REACTIONS
@@ -98,20 +116,8 @@ function ItemUI:onComboAddModel()
         return
     end
 
-    -- try to get the model
-    local model = self.comboAddModel:getModel(selected)
-    if not model then
-        self:log("Couldn't find the model for item "..selected)
-        return
-    end
-
     self:log("Setting model: " .. selected)
-	self.scene:setModel("worldModel", model)
-
-    -- update label
-    if self.comboAddModelLabel then
-        self.comboAddModelLabel:setName(selected)
-    end
+	self:setModel(selected)
 end
 
 function ItemUI:onComboChangeType()
@@ -167,34 +173,27 @@ end
 
 function ItemUI:initialise()
     ISPanel.initialise(self)
+    -- print("Initializing")
     self:create()
 end
 
 function ItemUI:setupDefaultValues()
     local modData = ModData.getOrCreate("WikiTools")
 
+    -- model listing type
+    modData.modelListingType = modData.modelListingType or "Items"
+    self.listingType = modData.modelListingType
+    self.comboAddModel:updateListing(self.listingType)
+
     -- last opened model
     modData.lastOpenedModel = modData.lastOpenedModel or "Base.FireAxe"
-
+    self.comboAddModel:select(modData.lastOpenedModel)
     if self.comboAddModelLabel then
         self.comboAddModelLabel:setName(modData.lastOpenedModel)
     end
 
-    -- weapon rotation hack
-    if modData.weaponRotationHack == nil then
-        modData.weaponRotationHack = true
-    end
-    self.scene.weaponRotationHack = modData.weaponRotationHack
-
-    local tickBox = self.tickBox
-    tickBox:setSelected(3, modData.weaponRotationHack)
-
-    -- model listing type
-    modData.modelListingType = modData.modelListingType or "Items"
-    self.listingType = modData.modelListingType
-
     -- setup model
-    self.scene:setModel("worldModel", modData.lastOpenedModel)
+    self:setModel(modData.lastOpenedModel)
 end
 
 function ItemUI:create()
@@ -250,6 +249,8 @@ function ItemUI:create()
     comboType:setEditable(true)
     self:addChild(comboType)
     self.comboType = comboType
+    comboType:addOption("All models")
+    comboType:addOption("All items")
 
     -- combo box selection
     local comboModel_x, comboModel_y = comboType_x, comboType_y + comboType_h + BORDER_Y
@@ -276,30 +277,14 @@ function ItemUI:create()
     self.tickBox = tickBox
 
     -- tick options
-    tickBox:addOption("Show grid", {target=self.scene, func=self.scene.onTickFromLua1, args={"setDrawGrid"}})
-    tickBox:addOption("Show axes", {target=self.scene, func=self.scene.onTickFromLua1, args={"setDrawGridAxes"}})
+    tickBox:addOption("Show axes", {target=self.scene, func=self.scene.setDrawGridAxes, args={}})
     tickBox:addOption("Weapon rotation hack", {target=self.scene, func=self.scene.setModelWeaponRotationHack, args={"worldModel"}})
-    -- tickBox:addOption("Show plane", {target=self.scene, func=self.scene.onTickFromLua, args={"setDrawGridPlane"}}) -- some items are below the planes
-
-    -- -- attachment button
-    -- local attachment_x, attachment_y = combo_x, combo_y + combo_h + LABEL_HGT + BORDER_Y
-    -- local attachment_w, attachment_h = combo_w, BUTTON_HEIGHT
-    -- local attachmentButton = ISButton:new(attachment_x, attachment_y, attachment_w, attachment_h, "Edit Attachments", self.scene, Wiki3DScene.setAttach)
-    -- attachmentButton:initialise()
-    -- self:addChild(attachmentButton)
-    -- self.attachmentButton = attachmentButton
-
 
     -- init model
     self:setupDefaultValues()
 
-    -- populate combo box
-    comboType:addOption("All models")
-    comboType:addOption("All items")
-
-    -- update selection
+    -- update selection, is done after we fetch the previously selected listing
     comboType:select(self.listingType)
-    self.comboAddModel:updateListing(self.listingType)
 end
 
 function ItemUI:new()

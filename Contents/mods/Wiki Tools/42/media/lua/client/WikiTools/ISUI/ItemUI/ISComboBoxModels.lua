@@ -2,7 +2,26 @@ require "ISUI/ISComboBox"
 
 ---@class ISComboBoxModels : ISComboBox
 ---@field listingType string
+---@field listedItems table<string, {type: string, object: Item}|{type: string}>
 local ISComboBoxModels = ISComboBox:derive("ISComboBoxModels")
+
+
+
+---Determine if the weapon rotation hack is needed for the given model.
+---@param fullType string
+---@return boolean
+function ISComboBoxModels:getWeaponRotationHack(fullType)
+    local item = self.listedItems[fullType]
+    if not item then return false end
+
+    local object = item.object
+    if not object then return false end
+
+    local sprite = object:getWeaponSprite()
+    if not sprite then return false end
+
+    return true
+end
 
 
 
@@ -38,6 +57,9 @@ function ISComboBoxModels:getItemList()
     return sorted
 end
 
+---Get the item model for the given item.
+---@param item Item
+---@return string|nil
 function ISComboBoxModels:getItemModel(item)
     local model = item:getWorldStaticModel()
     if model then return model end
@@ -45,9 +67,15 @@ function ISComboBoxModels:getItemModel(item)
     model = item:getStaticModel()
     if model then return model end
 
+    model = item:getWeaponSprite()
+    if model then return model end
+
     return nil
 end
 
+---Get the model based on the listing type and selected item.
+---@param fullType string
+---@return string|nil
 function ISComboBoxModels:getModel(fullType)
     local item = self.listedItems[fullType]
     local type = item.type
@@ -55,7 +83,7 @@ function ISComboBoxModels:getModel(fullType)
     -- try to fetch the proper model based on the listing type
     local model
     if type == "modelScript" then
-        model = fullType
+        model = fullType -- the full type itself is the model script
     elseif type == "itemScript" then
         model = self:getItemModel(item.object)
     end
@@ -69,7 +97,6 @@ function ISComboBoxModels:updateListing(listingType)
 
     self.listingType = listingType
     self:populateList()
-
 end
 
 function ISComboBoxModels:populateList()
